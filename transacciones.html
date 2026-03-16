@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emma Finanzas - Transacciones</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">E</div>
+        <div class="brand-text"><h1>Emma Finanzas</h1><p>Personal + Negocio</p></div>
+      </div>
+      <nav class="menu">
+        <a class="menu-item" href="index.html">Dashboard</a>
+        <a class="menu-item" href="gastos.html">Gastos</a>
+        <a class="menu-item" href="ingresos.html">Ingresos</a>
+        <a class="menu-item" href="cuentas.html">Cuentas</a>
+        <a class="menu-item" href="negocio.html">Negocio</a>
+        <a class="menu-item" href="ajustes.html">Ajustes</a>
+      </nav>
+    </aside>
+    <main class="main-content">
+      <header class="topbar">
+        <h2>Transacciones</h2>
+      </header>
+      <section class="panel">
+        <h3>Agregar transacción</h3>
+        <form id="transaction-form" class="goals" style="padding: 0;">
+          <div style="display: grid; gap: 10px; margin-bottom: 10px;">
+            <label>Tipo:
+              <select id="tx-type">
+                <option value="ingreso">Ingreso</option>
+                <option value="gasto">Gasto</option>
+                <option value="transferencia">Transferencia</option>
+              </select>
+            </label>
+            <label>Monto:
+              <input type="number" id="tx-amount" step="0.01" placeholder="0.00" required />
+            </label>
+            <label>Categoría:
+              <input type="text" id="tx-category" placeholder="Ej: Ventas, Operativo" required />
+            </label>
+            <label>Descripción:
+              <input type="text" id="tx-desc" placeholder="Descripción breve" required />
+            </label>
+            <label>Fecha:
+              <input type="date" id="tx-date" required />
+            </label>
+          </div>
+          <button class="btn primary" type="submit">Guardar transacción</button>
+        </form>
+
+        <h3 style="margin-top: 18px;">Historial local (demo)</h3>
+        <table class="table" id="tx-table">
+          <thead><tr><th>Tipo</th><th>Monto</th><th>Categoría</th><th>Descripción</th><th>Fecha</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

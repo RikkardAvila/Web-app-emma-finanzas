@@ -26,12 +26,23 @@
       <header class="topbar"><h2>Ventas</h2></header>
       <section class="panel">
         <h3>Reporte de ventas</h3>
-        <table class="table">
-          <thead><tr><th>Fecha</th><th>Producto</th><th>Cantidad</th><th>Total</th><th>Cliente</th></tr></thead>
+        <form id="sales-form" class="goals" style="padding: 0; margin-bottom: 16px;">
+          <div style="display: grid; gap: 10px; grid-template-columns: repeat(5, minmax(0,1fr)); align-items: end;">
+            <label>Fecha:<input type="date" id="sales-date" required /></label>
+            <label>Producto:<input type="text" id="sales-product" required /></label>
+            <label>Cantidad:<input type="number" id="sales-qty" min="1" step="1" required /></label>
+            <label>Total:<input type="number" id="sales-total" min="0" step="0.01" required /></label>
+            <label>Cliente:<input type="text" id="sales-client" required /></label>
+            <input type="hidden" id="sales-edit-index" value="" />
+            <button class="btn primary" type="submit" id="sales-add-btn">Agregar</button>
+          </div>
+        </form>
+        <table class="table" id="sales-table">
+          <thead><tr><th>Fecha</th><th>Producto</th><th>Cantidad</th><th>Total</th><th>Cliente</th><th>Acciones</th></tr></thead>
           <tbody>
-            <tr><td>14/03/2026</td><td>Servicio X</td><td>1</td><td>$2,500.00</td><td>Cliente A</td></tr>
-            <tr><td>12/03/2026</td><td>Producto Y</td><td>6</td><td>$1,800.00</td><td>Cliente C</td></tr>
-            <tr><td>10/03/2026</td><td>Consultoría Z</td><td>1</td><td>$3,100.00</td><td>Cliente B</td></tr>
+            <tr><td>14/03/2026</td><td>Servicio X</td><td>1</td><td>$2,500.00</td><td>Cliente A</td><td><button class="btn ghost sales-edit">Editar</button> <button class="btn ghost sales-delete">Eliminar</button></td></tr>
+            <tr><td>12/03/2026</td><td>Producto Y</td><td>6</td><td>$1,800.00</td><td>Cliente C</td><td><button class="btn ghost sales-edit">Editar</button> <button class="btn ghost sales-delete">Eliminar</button></td></tr>
+            <tr><td>10/03/2026</td><td>Consultoría Z</td><td>1</td><td>$3,100.00</td><td>Cliente B</td><td><button class="btn ghost sales-edit">Editar</button> <button class="btn ghost sales-delete">Eliminar</button></td></tr>
           </tbody>
         </table>
         <p style="margin-top: 10px; color: var(--muted);">* Estas secciones solo se acceden desde Negocio.</p>

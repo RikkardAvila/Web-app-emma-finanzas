@@ -26,17 +26,28 @@
       <header class="topbar"><h2>Inventario</h2></header>
       <section class="panel">
         <h3>Gestión de inventario</h3>
-        <table class="table">
-          <thead><tr><th>Item</th><th>Categoría</th><th>Stock</th><th>Precio</th><th>Valor</th></tr></thead>
+        <form id="inventory-form" class="goals" style="padding: 0; margin-bottom: 16px;">
+          <div style="display: grid; gap: 10px; grid-template-columns: repeat(5, minmax(0,1fr)); align-items: end;">
+            <label>Item:<input type="text" id="inv-item" required /></label>
+            <label>Categoría:<input type="text" id="inv-category" required /></label>
+            <label>Stock:<input type="number" id="inv-stock" min="0" step="1" required /></label>
+            <label>Precio:<input type="number" id="inv-price" min="0" step="0.01" required /></label>
+            <button class="btn primary" type="submit" id="inv-add-btn">Agregar</button>
+          </div>
+          <input type="hidden" id="inv-edit-index" value="" />
+        </form>
+        <table class="table" id="inv-table">
+          <thead><tr><th>Item</th><th>Categoría</th><th>Stock</th><th>Precio</th><th>Valor</th><th>Acciones</th></tr></thead>
           <tbody>
-            <tr><td>Producto A</td><td>Insumos</td><td>112</td><td>$25.00</td><td>$2,800.00</td></tr>
-            <tr><td>Producto B</td><td>Materiales</td><td>56</td><td>$45.50</td><td>$2,548.00</td></tr>
-            <tr><td>Producto C</td><td>Otros</td><td>284</td><td>$12.20</td><td>$3,464.80</td></tr>
+            <tr><td>Producto A</td><td>Insumos</td><td>112</td><td>$25.00</td><td>$2,800.00</td><td><button class="btn ghost edit-item" type="button">Editar</button> <button class="btn ghost delete-item" type="button">Eliminar</button></td></tr>
+            <tr><td>Producto B</td><td>Materiales</td><td>56</td><td>$45.50</td><td>$2,548.00</td><td><button class="btn ghost edit-item" type="button">Editar</button> <button class="btn ghost delete-item" type="button">Eliminar</button></td></tr>
+            <tr><td>Producto C</td><td>Otros</td><td>284</td><td>$12.20</td><td>$3,464.80</td><td><button class="btn ghost edit-item" type="button">Editar</button> <button class="btn ghost delete-item" type="button">Eliminar</button></td></tr>
           </tbody>
         </table>
         <p style="margin-top: 10px; color: var(--muted);">* Estas secciones solo se acceden desde Negocio.</p>
       </section>
     </main>
   </div>
+  <script src="app.js"></script>
 </body>
 </html>
