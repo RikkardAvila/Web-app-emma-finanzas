@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inventario - Emma Finanzas</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body> 
+    <div class="container">
+        <header>
+        <h1>Inventario</h1>
+        </header>
+        <nav class="menu">
+        <a class="menu-item" href="index.html">Dashboard</a>
+        <a class="menu-item" href="ingresos.html">Ingresos</a>
+        <a class="menu-item" href="gastos.html">Gastos</a>
+        <a class="menu-item" href="cuentas.html">Cuentas</a>
+        <a class="menu-item" href="negocio.html">Negocio</a>
+        <a class="menu-item" href="ajustes.html">Ajustes</a>
+        </nav>
+        <main>
+        <section class="content">
+            <h2>Gestión de Inventario</h2>
+            <form id="inv-form">
+            <div class="form-group">
+                <label>Nombre del Item: <input type="text" id="inv-name" required /></label>
+            </div>
+            <div class="form-group">
+                <label>Categoría: 
+                <select id="inv-category">
+                    <option value="insumos">Insumos</option>
+                    <option value="productos">Productos</option>
+                    <option value="otros">Otros</option>
+                </select>
+                </label>     
+</body>
+</html>
