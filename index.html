@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,8 +8,9 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
   <div class="app-shell">
     <aside class="sidebar">
@@ -70,7 +72,7 @@
       </section>
 
       <section class="grid-section">
-        <article class="panel">
+        <article class="panel large">
           <div class="panel-header">
             <h2>Movimientos Recientes</h2>
             <a href="#">Ver todos</a>
@@ -78,14 +80,42 @@
           <table class="table">
             <thead>
               <tr>
-                <th>Fecha</th><th>Descripción</th><th>Categoría</th><th>Tipo</th><th>Monto</th>
+                <th>Fecha</th>
+                <th>Descripción</th>
+                <th>Categoría</th>
+                <th>Tipo</th>
+                <th>Monto</th>
               </tr>
             </thead>
             <tbody>
-              <tr><td>14/03/2026</td><td>Pago cliente A</td><td>Ventas</td><td class="tag income">Ingreso</td><td class="amount">$2,500.00</td></tr>
-              <tr><td>13/03/2026</td><td>Compra insumos</td><td>Operativo</td><td class="tag expense">Gasto</td><td class="amount negative">$-320.00</td></tr>
-              <tr><td>12/03/2026</td><td>Sueldo personal</td><td>Personal</td><td class="tag expense">Gasto</td><td class="amount negative">$-1,200.00</td></tr>
-              <tr><td>11/03/2026</td><td>Pago cliente B</td><td>Servicios</td><td class="tag income">Ingreso</td><td class="amount">$3,100.00</td></tr>
+              <tr>
+                <td>14/03/2026</td>
+                <td>Pago cliente A</td>
+                <td>Ventas</td>
+                <td class="tag income">Ingreso</td>
+                <td class="amount">$2,500.00</td>
+              </tr>
+              <tr>
+                <td>13/03/2026</td>
+                <td>Compra insumos</td>
+                <td>Operativo</td>
+                <td class="tag expense">Gasto</td>
+                <td class="amount negative">$-320.00</td>
+              </tr>
+              <tr>
+                <td>12/03/2026</td>
+                <td>Sueldo personal</td>
+                <td>Personal</td>
+                <td class="tag expense">Gasto</td>
+                <td class="amount negative">$-1,200.00</td>
+              </tr>
+              <tr>
+                <td>11/03/2026</td>
+                <td>Pago cliente B</td>
+                <td>Servicios</td>
+                <td class="tag income">Ingreso</td>
+                <td class="amount">$3,100.00</td>
+              </tr>
             </tbody>
           </table>
         </article>
@@ -136,4 +166,5 @@
   </div>
   <script src="app.js"></script>
 </body>
+
 </html>
