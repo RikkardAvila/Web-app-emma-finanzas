@@ -191,14 +191,14 @@
 
       try {
         if (isLogin) {
-          const { error } = await supabase.auth.signInWithPassword({
+          const { error } = await supabaseApp.auth.signInWithPassword({
             email,
             password,
           });
           if (error) throw error;
           // auth.js onAuthStateChange will handle the redirect
         } else {
-          const { error, data } = await supabase.auth.signUp({
+          const { error, data } = await supabaseApp.auth.signUp({
             email,
             password,
           });

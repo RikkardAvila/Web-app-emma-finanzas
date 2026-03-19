@@ -10,6 +10,16 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Mobile nav logic
+  document.querySelectorAll('.mobile-nav-item').forEach((item) => {
+    const href = item.getAttribute('data-nav-mobile');
+    if (href && href === current) {
+      item.classList.add('active');
+    } else {
+      item.classList.remove('active');
+    }
+  });
+
   // Mapear enlaces de nav dentro de negocios
   const navMap = {
     'inventario': 'inventario.html',
