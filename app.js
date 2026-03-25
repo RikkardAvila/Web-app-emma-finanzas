@@ -1,5 +1,9 @@
 // Manejo de navegación activa y búsqueda de página actual
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+  // Verificar sesión actual para asociar datos al usuario
+  const { data: { session } } = await supabaseApp.auth.getSession();
+  const currentUser = session ? session.user : null;
+
   const current = window.location.pathname.split('/').pop() || 'index.html';
   document.querySelectorAll('.menu-item').forEach((item) => {
     const href = item.getAttribute('href');
@@ -44,7 +48,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Inicializar transacciones si estamos en la página de transacciones
+  // --- TRANSACCIONES ---
   const txDateInput = document.getElementById('tx-date');
   const txForm = document.getElementById('transaction-form');
   const txTableBody = document.querySelector('#tx-table tbody');
@@ -58,8 +62,32 @@ window.addEventListener('DOMContentLoaded', () => {
     txDateInput.min = '1900-01-01';
   }
 
-  if (txForm && txTableBody) {
-    txForm.addEventListener('submit', (e) => {
+  async function loadTransactions() {
+    if (!txTableBody || !currentUser) return;
+    const { data: txs, error } = await supabaseApp
+      .from('transacciones')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .order('date', { ascending: false });
+      
+    if (error) {
+      console.error('Error al cargar transacciones:', error);
+      return;
+    }
+    
+    txTableBody.innerHTML = '';
+    txs.forEach(tx => {
+      const row = document.createElement('tr');
+      const sign = tx.type === 'gasto' ? '-' : '';
+      row.innerHTML = `<td>${tx.type}</td><td>${sign}$${tx.amount}</td><td>${tx.category}</td><td>${tx.description}</td><td>${tx.date}</td>`;
+      txTableBody.appendChild(row);
+    });
+  }
+
+  if (txTableBody) loadTransactions();
+
+  if (txForm && txTableBody && currentUser) {
+    txForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const txType = document.getElementById('tx-type').value;
       const amountValue = document.getElementById('tx-amount').value;
@@ -70,11 +98,22 @@ window.addEventListener('DOMContentLoaded', () => {
 
       if (!amountValue || isNaN(amount) || !category || !desc || !date) return;
 
-      const row = document.createElement('tr');
-      const sign = txType === 'gasto' ? '-' : '';
-      row.innerHTML = `<td>${txType}</td><td>${sign}$${amount}</td><td>${category}</td><td>${desc}</td><td>${date}</td>`;
-      txTableBody.prepend(row);
+      const { error } = await supabaseApp.from('transacciones').insert([{
+        user_id: currentUser.id,
+        type: txType,
+        amount: amount,
+        category: category,
+        description: desc,
+        date: date
+      }]);
 
+      if (error) {
+        console.error('Error al guardar transacción:', error);
+        alert('Hubo un error al guardar la transacción');
+        return;
+      }
+
+      await loadTransactions();
       txForm.reset();
       if (txDateInput && formattedDate) {
         txDateInput.value = formattedDate;
@@ -82,17 +121,37 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Inventario: edición/creación/eliminación
+  // --- INVENTARIO ---
   const invForm = document.getElementById('inventory-form');
   const invTableBody = document.querySelector('#inv-table tbody');
 
-  function updateRowValues(row, item, category, stock, price) {
-    const value = (stock * price).toFixed(2);
-    row.children[0].textContent = item;
-    row.children[1].textContent = category;
-    row.children[2].textContent = stock;
-    row.children[3].textContent = `$${Number(price).toFixed(2)}`;
-    row.children[4].textContent = `$${value}`;
+  async function loadInventory() {
+    if (!invTableBody || !currentUser) return;
+    const { data: items, error } = await supabaseApp
+      .from('inventario')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .order('item', { ascending: true });
+      
+    if (error) {
+      console.error('Error al cargar inventario:', error);
+      return;
+    }
+    
+    invTableBody.innerHTML = '';
+    items.forEach(item => {
+      renderInventoryRow(item);
+    });
+  }
+
+  function renderInventoryRow(invObj) {
+    const row = document.createElement('tr');
+    row.dataset.id = invObj.id; // Store ID to update/delete
+    const value = (invObj.stock * invObj.price).toFixed(2);
+    row.innerHTML = `<td>${invObj.item}</td><td>${invObj.category}</td><td>${invObj.stock}</td><td>$${Number(invObj.price).toFixed(2)}</td><td>$${value}</td>`;
+    row.appendChild(createActionCell());
+    invTableBody.appendChild(row);
+    attachInventoryEvents(row);
   }
 
   function createActionCell() {
@@ -114,7 +173,6 @@ window.addEventListener('DOMContentLoaded', () => {
   function attachInventoryEvents(row) {
     const editButton = row.querySelector('.edit-item');
     const deleteButton = row.querySelector('.delete-item');
-
     if (!editButton || !deleteButton) return;
 
     editButton.addEventListener('click', () => {
@@ -128,58 +186,113 @@ window.addEventListener('DOMContentLoaded', () => {
       invCategory.value = row.children[1].textContent;
       invStock.value = row.children[2].textContent;
       invPrice.value = parseFloat(row.children[3].textContent.replace('$', ''));
-      invEditIndex.value = Array.from(invTableBody.rows).indexOf(row);
+      invEditIndex.value = row.dataset.id; // Store DB id
+      
       document.getElementById('inv-add-btn').textContent = 'Actualizar';
     });
 
-    deleteButton.addEventListener('click', () => {
-      row.remove();
-      const invEditIndex = document.getElementById('inv-edit-index');
-      if (invEditIndex.value && parseInt(invEditIndex.value, 10) === Array.from(invTableBody.rows).indexOf(row)) {
-        invForm.reset();
-        invEditIndex.value = '';
-        document.getElementById('inv-add-btn').textContent = 'Agregar';
+    deleteButton.addEventListener('click', async () => {
+      const dbId = row.dataset.id;
+      if (confirm('¿Seguro de eliminar este producto?')) {
+        const { error } = await supabaseApp.from('inventario').delete().eq('id', dbId);
+        if (error) {
+          console.error(error);
+          alert('Error al eliminar');
+          return;
+        }
+        row.remove();
+        const invEditIndex = document.getElementById('inv-edit-index');
+        if (invEditIndex.value === dbId) {
+          invForm.reset();
+          invEditIndex.value = '';
+          document.getElementById('inv-add-btn').textContent = 'Agregar';
+        }
       }
     });
   }
 
-  if (invForm && invTableBody) {
-    Array.from(invTableBody.rows).forEach((row) => attachInventoryEvents(row));
+  if (invTableBody) loadInventory();
 
-    invForm.addEventListener('submit', (e) => {
+  if (invForm && invTableBody && currentUser) {
+    invForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const invItem = document.getElementById('inv-item').value.trim();
-      const invCategory = document.getElementById('inv-category').value.trim();
-      const invStock = Number(document.getElementById('inv-stock').value);
-      const invPrice = Number(document.getElementById('inv-price').value);
-      const invEditIndex = document.getElementById('inv-edit-index').value;
+      const invItemVal = document.getElementById('inv-item').value.trim();
+      const invCategoryVal = document.getElementById('inv-category').value.trim();
+      const invStockVal = Number(document.getElementById('inv-stock').value);
+      const invPriceVal = Number(document.getElementById('inv-price').value);
+      const editId = document.getElementById('inv-edit-index').value;
 
-      if (!invItem || !invCategory || isNaN(invStock) || isNaN(invPrice)) return;
+      if (!invItemVal || !invCategoryVal || isNaN(invStockVal) || isNaN(invPriceVal)) return;
 
-      if (invEditIndex !== '') {
-        const row = invTableBody.rows[invEditIndex];
-        if (row) {
-          updateRowValues(row, invItem, invCategory, invStock, invPrice);
+      if (editId !== '') {
+        const { error } = await supabaseApp.from('inventario').update({
+          item: invItemVal,
+          category: invCategoryVal,
+          stock: invStockVal,
+          price: invPriceVal
+        }).eq('id', editId);
+        
+        if (error) {
+          console.error(error);
+          alert('Error al actualizar');
+          return;
         }
+        
         document.getElementById('inv-edit-index').value = '';
         document.getElementById('inv-add-btn').textContent = 'Agregar';
+        await loadInventory();
       } else {
-        const newRow = document.createElement('tr');
-        const value = (invStock * invPrice).toFixed(2);
-        newRow.innerHTML = `<td>${invItem}</td><td>${invCategory}</td><td>${invStock}</td><td>$${invPrice.toFixed(2)}</td><td>$${value}</td>`;
-        newRow.appendChild(createActionCell());
-        invTableBody.prepend(newRow);
-        attachInventoryEvents(newRow);
+        const { error } = await supabaseApp.from('inventario').insert([{
+          user_id: currentUser.id,
+          item: invItemVal,
+          category: invCategoryVal,
+          stock: invStockVal,
+          price: invPriceVal
+        }]);
+        
+        if (error) {
+          console.error('Error al insertar:', error);
+          alert('Error al agregar');
+          return;
+        }
+        await loadInventory();
       }
 
       invForm.reset();
     });
   }
 
-  // Ventas: edición/creación/eliminación
+  // --- VENTAS ---
   const salesForm = document.getElementById('sales-form');
   const salesTableBody = document.querySelector('#sales-table tbody');
+
+  async function loadSales() {
+    if (!salesTableBody || !currentUser) return;
+    const { data: sales, error } = await supabaseApp
+      .from('ventas')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .order('date', { ascending: false });
+      
+    if (error) {
+      console.error('Error al cargar ventas:', error);
+      return;
+    }
+    
+    salesTableBody.innerHTML = '';
+    sales.forEach(sale => {
+      renderSalesRow(sale);
+    });
+  }
+
+  function renderSalesRow(saleObj) {
+    const row = document.createElement('tr');
+    row.dataset.id = saleObj.id;
+    row.innerHTML = `<td>${saleObj.date}</td><td>${saleObj.product}</td><td>${saleObj.qty}</td><td>$${Number(saleObj.total).toFixed(2)}</td><td>${saleObj.client}</td><td><button class="btn ghost sales-edit" type="button">Editar</button> <button class="btn ghost sales-delete" type="button">Eliminar</button></td>`;
+    salesTableBody.appendChild(row);
+    attachSalesEvents(row);
+  }
 
   function attachSalesEvents(row) {
     const editBtn = row.querySelector('.sales-edit');
@@ -192,52 +305,79 @@ window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('sales-qty').value = row.children[2].textContent;
       document.getElementById('sales-total').value = row.children[3].textContent.replace('$', '').replace(',', '');
       document.getElementById('sales-client').value = row.children[4].textContent;
-      document.getElementById('sales-edit-index').value = Array.from(salesTableBody.rows).indexOf(row);
+      document.getElementById('sales-edit-index').value = row.dataset.id;
       document.getElementById('sales-add-btn').textContent = 'Actualizar';
     });
 
-    deleteBtn.addEventListener('click', () => {
-      const editIndex = Number(document.getElementById('sales-edit-index').value);
-      row.remove();
-      if (!isNaN(editIndex) && editIndex === Array.from(salesTableBody.rows).indexOf(row)) {
-        salesForm.reset();
-        document.getElementById('sales-edit-index').value = '';
-        document.getElementById('sales-add-btn').textContent = 'Agregar';
+    deleteBtn.addEventListener('click', async () => {
+      const dbId = row.dataset.id;
+      if (confirm('¿Seguro de eliminar esta venta?')) {
+        const { error } = await supabaseApp.from('ventas').delete().eq('id', dbId);
+        if (error) {
+          console.error(error);
+          alert('Error al eliminar');
+          return;
+        }
+        
+        row.remove();
+        const editId = document.getElementById('sales-edit-index').value;
+        if (editId === dbId) {
+          salesForm.reset();
+          document.getElementById('sales-edit-index').value = '';
+          document.getElementById('sales-add-btn').textContent = 'Agregar';
+        }
       }
     });
   }
 
-  if (salesForm && salesTableBody) {
-    Array.from(salesTableBody.rows).forEach((row) => attachSalesEvents(row));
+  if (salesTableBody) loadSales();
 
-    salesForm.addEventListener('submit', (e) => {
+  if (salesForm && salesTableBody && currentUser) {
+    salesForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const date = document.getElementById('sales-date').value;
-      const product = document.getElementById('sales-product').value.trim();
-      const qty = Number(document.getElementById('sales-qty').value);
-      const total = Number(document.getElementById('sales-total').value);
-      const client = document.getElementById('sales-client').value.trim();
-      const editIndex = document.getElementById('sales-edit-index').value;
+      const dateVal = document.getElementById('sales-date').value;
+      const productVal = document.getElementById('sales-product').value.trim();
+      const qtyVal = Number(document.getElementById('sales-qty').value);
+      const totalVal = Number(document.getElementById('sales-total').value);
+      const clientVal = document.getElementById('sales-client').value.trim();
+      const editId = document.getElementById('sales-edit-index').value;
 
-      if (!date || !product || isNaN(qty) || qty <= 0 || isNaN(total) || total < 0 || !client) return;
+      if (!dateVal || !productVal || isNaN(qtyVal) || qtyVal <= 0 || isNaN(totalVal) || totalVal < 0 || !clientVal) return;
 
-      if (editIndex !== '') {
-        const row = salesTableBody.rows[editIndex];
-        if (row) {
-          row.children[0].textContent = date;
-          row.children[1].textContent = product;
-          row.children[2].textContent = qty;
-          row.children[3].textContent = `$${total.toFixed(2)}`;
-          row.children[4].textContent = client;
+      if (editId !== '') {
+        const { error } = await supabaseApp.from('ventas').update({
+          date: dateVal,
+          product: productVal,
+          qty: qtyVal,
+          total: totalVal,
+          client: clientVal
+        }).eq('id', editId);
+        
+        if (error) {
+          console.error(error);
+          alert('Error al actualizar');
+          return;
         }
         document.getElementById('sales-edit-index').value = '';
         document.getElementById('sales-add-btn').textContent = 'Agregar';
+        await loadSales();
       } else {
-        const newRow = document.createElement('tr');
-        newRow.innerHTML = `<td>${date}</td><td>${product}</td><td>${qty}</td><td>$${total.toFixed(2)}</td><td>${client}</td><td><button class="btn ghost sales-edit" type="button">Editar</button> <button class="btn ghost sales-delete" type="button">Eliminar</button></td>`;
-        salesTableBody.prepend(newRow);
-        attachSalesEvents(newRow);
+        const { error } = await supabaseApp.from('ventas').insert([{
+          user_id: currentUser.id,
+          date: dateVal,
+          product: productVal,
+          qty: qtyVal,
+          total: totalVal,
+          client: clientVal
+        }]);
+        
+        if (error) {
+          console.error(error);
+          alert('Error al guardar');
+          return;
+        }
+        await loadSales();
       }
 
       salesForm.reset();
