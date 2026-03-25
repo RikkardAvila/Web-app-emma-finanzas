@@ -64,11 +64,22 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   async function loadTransactions() {
     if (!txTableBody || !currentUser) return;
-    const { data: txs, error } = await supabaseApp
+
+    let query = supabaseApp
       .from('transacciones')
       .select('*')
       .eq('user_id', currentUser.id)
       .order('date', { ascending: false });
+
+    // Filter by page context
+    const currentPath = window.location.pathname.split('/').pop() || 'index.html';
+    if (currentPath === 'ingresos.html') {
+      query = query.eq('type', 'ingreso');
+    } else if (currentPath === 'gastos.html') {
+      query = query.eq('type', 'gasto');
+    }
+
+    const { data: txs, error } = await query;
       
     if (error) {
       console.error('Error al cargar transacciones:', error);
@@ -77,10 +88,76 @@ window.addEventListener('DOMContentLoaded', async () => {
     
     txTableBody.innerHTML = '';
     txs.forEach(tx => {
-      const row = document.createElement('tr');
-      const sign = tx.type === 'gasto' ? '-' : '';
-      row.innerHTML = `<td>${tx.type}</td><td>${sign}$${tx.amount}</td><td>${tx.category}</td><td>${tx.description}</td><td>${tx.date}</td>`;
-      txTableBody.appendChild(row);
+      renderTransactionRow(tx);
+    });
+  }
+
+  function renderTransactionRow(tx) {
+    const row = document.createElement('tr');
+    row.dataset.id = tx.id;
+    const sign = tx.type === 'gasto' ? '-' : '';
+    row.innerHTML = `<td>${tx.type}</td><td>${sign}$${tx.amount}</td><td>${tx.category}</td><td>${tx.description}</td><td>${tx.date}</td>`;
+    
+    // Acciones
+    const cell = document.createElement('td');
+    const editButton = document.createElement('button');
+    editButton.type = 'button';
+    editButton.className = 'btn ghost tx-edit';
+    editButton.textContent = 'Editar';
+
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.className = 'btn ghost tx-delete';
+    deleteButton.textContent = 'Eliminar';
+
+    cell.append(editButton, document.createTextNode(' '), deleteButton);
+    row.appendChild(cell);
+
+    txTableBody.appendChild(row);
+    attachTransactionEvents(row);
+  }
+
+  function attachTransactionEvents(row) {
+    const editBtn = row.querySelector('.tx-edit');
+    const deleteBtn = row.querySelector('.tx-delete');
+    if (!editBtn || !deleteBtn) return;
+
+    editBtn.addEventListener('click', () => {
+      const typeText = row.children[0].textContent.toLowerCase();
+      // Aseguramos que el select tome el valor correcto
+      document.getElementById('tx-type').value = typeText === 'gasto' ? 'gasto' : (typeText === 'transferencia' ? 'transferencia' : 'ingreso');
+      document.getElementById('tx-amount').value = parseFloat(row.children[1].textContent.replace('$', '').replace('-', ''));
+      document.getElementById('tx-category').value = row.children[2].textContent;
+      document.getElementById('tx-desc').value = row.children[3].textContent;
+      document.getElementById('tx-date').value = row.children[4].textContent;
+      document.getElementById('tx-edit-index').value = row.dataset.id;
+      
+      const addBtn = document.getElementById('tx-add-btn');
+      if(addBtn) addBtn.textContent = 'Actualizar transacción';
+    });
+
+    deleteBtn.addEventListener('click', async () => {
+      const dbId = row.dataset.id;
+      if (confirm('¿Seguro de eliminar esta transacción?')) {
+        const { error } = await supabaseApp.from('transacciones').delete().eq('id', dbId);
+        if (error) {
+          console.error(error);
+          alert('Error al eliminar');
+          return;
+        }
+        
+        row.remove();
+        const editId = document.getElementById('tx-edit-index').value;
+        if (editId === dbId) {
+          txForm.reset();
+          document.getElementById('tx-edit-index').value = '';
+          const addBtn = document.getElementById('tx-add-btn');
+          if(addBtn) addBtn.textContent = 'Guardar transacción';
+          if (txDateInput && formattedDate) {
+            txDateInput.value = formattedDate;
+          }
+        }
+      }
     });
   }
 
@@ -95,25 +172,50 @@ window.addEventListener('DOMContentLoaded', async () => {
       const category = document.getElementById('tx-category').value.trim();
       const desc = document.getElementById('tx-desc').value.trim();
       const date = document.getElementById('tx-date').value;
+      
+      const editIndexInput = document.getElementById('tx-edit-index');
+      const editId = editIndexInput ? editIndexInput.value : '';
 
       if (!amountValue || isNaN(amount) || !category || !desc || !date) return;
 
-      const { error } = await supabaseApp.from('transacciones').insert([{
-        user_id: currentUser.id,
-        type: txType,
-        amount: amount,
-        category: category,
-        description: desc,
-        date: date
-      }]);
+      if (editId !== '') {
+        const { error } = await supabaseApp.from('transacciones').update({
+          type: txType,
+          amount: amount,
+          category: category,
+          description: desc,
+          date: date
+        }).eq('id', editId);
+        
+        if (error) {
+          console.error('Error al actualizar transacción:', error);
+          alert('Hubo un error al actualizar la transacción');
+          return;
+        }
+        
+        if (editIndexInput) editIndexInput.value = '';
+        const addBtn = document.getElementById('tx-add-btn');
+        if(addBtn) addBtn.textContent = 'Guardar transacción';
+        await loadTransactions();
+      } else {
+        const { error } = await supabaseApp.from('transacciones').insert([{
+          user_id: currentUser.id,
+          type: txType,
+          amount: amount,
+          category: category,
+          description: desc,
+          date: date
+        }]);
 
-      if (error) {
-        console.error('Error al guardar transacción:', error);
-        alert('Hubo un error al guardar la transacción');
-        return;
+        if (error) {
+          console.error('Error al guardar transacción:', error);
+          alert('Hubo un error al guardar la transacción');
+          return;
+        }
+
+        await loadTransactions();
       }
 
-      await loadTransactions();
       txForm.reset();
       if (txDateInput && formattedDate) {
         txDateInput.value = formattedDate;

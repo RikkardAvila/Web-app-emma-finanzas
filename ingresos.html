@@ -17,6 +17,7 @@
         <a class="menu-item" href="index.html">Dashboard</a>
         <a class="menu-item active" href="ingresos.html">Ingresos</a>
         <a class="menu-item" href="gastos.html">Gastos</a>
+        <a class="menu-item" href="transacciones.html">Transacciones</a>
         <a class="menu-item" href="cuentas.html">Cuentas</a>
         <a class="menu-item" href="negocio.html">Negocio</a>
         <a class="menu-item" href="ajustes.html">Ajustes</a>
@@ -25,13 +26,35 @@
     <main class="main-content">
       <header class="topbar"><h2>Ingresos</h2></header>
       <section class="panel">
-        <h3>Control de ingresos</h3>
-        <table class="table">
-          <thead><tr><th>Fecha</th><th>Cliente</th><th>Descripción</th><th>Monto</th><th>Estado</th></tr></thead>
-          <tbody>
-            <tr><td>14/03/2026</td><td>Cliente A</td><td>Consultoría</td><td class="amount">$2,500.00</td><td>Recibido</td></tr>
-            <tr><td>11/03/2026</td><td>Cliente B</td><td>Proyecto Web</td><td class="amount">$3,100.00</td><td>Parcial</td></tr>
-          </tbody>
+        <h3>Agregar Ingreso</h3>
+        <form id="transaction-form" class="goals" style="padding: 0;">
+          <input type="hidden" id="tx-edit-index" value="" />
+          <div style="display: grid; gap: 10px; margin-bottom: 10px;">
+            <label style="display:none;">Tipo:
+              <select id="tx-type">
+                <option value="ingreso" selected>Ingreso</option>
+              </select>
+            </label>
+            <label>Monto:
+              <input type="number" id="tx-amount" step="0.01" placeholder="0.00" required />
+            </label>
+            <label>Categoría:
+              <input type="text" id="tx-category" placeholder="Ej: Ventas, Operativo" required />
+            </label>
+            <label>Descripción:
+              <input type="text" id="tx-desc" placeholder="Descripción breve" required />
+            </label>
+            <label>Fecha:
+              <input type="date" id="tx-date" required />
+            </label>
+          </div>
+          <button class="btn primary" id="tx-add-btn" type="submit">Guardar ingreso</button>
+        </form>
+
+        <h3 style="margin-top: 18px;">Control de ingresos</h3>
+        <table class="table" id="tx-table">
+          <thead><tr><th>Tipo</th><th>Monto</th><th>Categoría</th><th>Descripción</th><th>Fecha</th><th>Acciones</th></tr></thead>
+          <tbody></tbody>
         </table>
       </section>
     </main>

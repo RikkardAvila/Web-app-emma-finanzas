@@ -17,6 +17,7 @@
         <a class="menu-item" href="index.html">Dashboard</a>
         <a class="menu-item" href="ingresos.html">Ingresos</a>
         <a class="menu-item" href="gastos.html">Gastos</a>
+        <a class="menu-item" href="transacciones.html">Transacciones</a>
         <a class="menu-item" href="cuentas.html">Cuentas</a>
         <a class="menu-item" href="negocio.html">Negocio</a>
         <a class="menu-item" href="ajustes.html">Ajustes</a>
@@ -29,6 +30,7 @@
       <section class="panel">
         <h3>Agregar transacción</h3>
         <form id="transaction-form" class="goals" style="padding: 0;">
+          <input type="hidden" id="tx-edit-index" value="" />
           <div style="display: grid; gap: 10px; margin-bottom: 10px;">
             <label>Tipo:
               <select id="tx-type">
@@ -50,12 +52,12 @@
               <input type="date" id="tx-date" required />
             </label>
           </div>
-          <button class="btn primary" type="submit">Guardar transacción</button>
+          <button class="btn primary" id="tx-add-btn" type="submit">Guardar transacción</button>
         </form>
 
         <h3 style="margin-top: 18px;">Historial local (demo)</h3>
         <table class="table" id="tx-table">
-          <thead><tr><th>Tipo</th><th>Monto</th><th>Categoría</th><th>Descripción</th><th>Fecha</th></tr></thead>
+          <thead><tr><th>Tipo</th><th>Monto</th><th>Categoría</th><th>Descripción</th><th>Fecha</th><th>Acciones</th></tr></thead>
           <tbody></tbody>
         </table>
       </section>
